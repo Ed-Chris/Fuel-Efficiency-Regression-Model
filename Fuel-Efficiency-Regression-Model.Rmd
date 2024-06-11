@@ -1,0 +1,888 @@
+---
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  word_document: default
+  pdf_document: default
+---
+<br><br><br>
+<br><br><br>
+<br><br><br>
+<br><br><br>
+<html>
+<head>
+  <title>DATA 603, Group 9</title>
+</head>
+<body>
+<br><br><br>
+<br><br><br>
+<br><br><br><br><br><br>
+
+
+  <h1 style="text-align:center;">FUEL EFFICIENCY REGRESSION MODEL</h1>
+  <p style="text-align:center;">Aditya Jain, Ahmed Omar, Yedukrishnan</p>
+  <p style="text-align:center;">Dec 8, 2023</p>
+
+  <hr>
+<br><br><br>
+<br><br><br><br><br><br>
+<br><br><br><br><br><br>
+<br><br><br>
+</body>
+</html>
+<br><br><br>
+<br><br><br>
+<br><br><br>
+<br><br><br>
+<br><br><br>
+<br><br><br>
+
+
+## **Introduction**
+
+The daily commute for many individuals, whether it's to go to work, school, or any other location, requires the use of a motor vehicle. Although the world is transitioning towards greener sources of transportation, the most common method of transport for many people is a gas powered vehicle. On a monthly basis, cars tend to be somewhat expensive for many people due to the cost of insurance, maintenance, as well as gas. If an individual wishes to cut their spending, a possible goal to focus on would be to reduce their spending on gas by purchasing a more fuel-efficient vehicle. The objective of this report is to highlight what features of a car have the most significant effect on its fuel efficiency. To do so, we will be looking at the independent variable, miles per gallon (mpg), to highlight its relation to dependent variables such as the cylinder number of the vehicle, displacement, horsepower, weight, acceleration, and if the origin (1: American, 2: European, 3: Japanese) of the vehicle is also a significant predictor.
+
+
+## **Dataset**
+
+We will focus on the use of one dataset in this report, a csv labelled as "Fuelcar." This file was obtained from the Carnegie Mellon University website through their StatLib data collection [1]. It is an open dataset and the university has provided free use of this file for educational purposes. The dataset contains 399 rows and 9 columns. About 7 null values exist and therefore, the data was cleaned to remove any missing values using built in excel functions. 
+
+## **Methodology**
+
+Again, the data file we have contains 399 rows and 9 columns, where the variables are:
+
+**mpg** (Quantitative) = fuel efficiency measured in miles per gallon (mpg)
+
+**cylinders** (Qualitative) = number of cylinders in the engine (4,5,6,8)
+
+**displacement** (Quantitative) = engine displacement (in cubic inches)
+
+**horsepower** (Quantitative) = unit of measurement 
+
+**weight** (Quantitative) = vehicle weight (in pounds)
+
+**acceleration** (Quantitative) = time to accelerate from O to 60 mph (in seconds)
+
+**model.year** (Qualitative) = model year
+
+**origin** (Qualitative) = origin of car (1: American, 2: European, 3: Japanese)
+
+**car.name** (Qualitative) = car name
+
+The main dependent variable is quantitative, and measures miles per gallon (mpg) where the independent variables will include the rest of the listed columns. Please note that the "car.name" and "model.year" variables will not be included in this report only because of the amount of unique values available, and we did not feel that treating both as dummy variables would be ideal.
+
+Below, we will be conducting a multiple linear regression analysis to propose a model to use for predicting our dependent variable. All steps below have been conducted in relative order to test and propose the best fit model, while testing our assumptions for linear regression analysis. 
+
+### Techniques Used and Their Justification
+
+**Interactions:**
+
+Use: Introducing interaction terms in a regression model allows you to account for the combined effect of two or more variables, acknowledging that their joint impact may differ from the sum of their individual effects.
+
+Justification: Interactions are useful when the effect of one variable on the dependent variable depends on the level of another variable. It helps capture non-additive relationships.
+
+**Individual t-tests:**
+
+Use: Conducting individual t-tests for coefficients tests the hypothesis that the coefficient for a specific variable is significantly different from zero.
+
+Justification: Helps determine the significance of individual predictors and assess their contribution to the model.
+
+**Global and Partial F-Tests:**
+
+Use: Global F-tests assess the overall significance of the regression model, while partial F-tests assess the significance of a subset of variables.
+
+Justification: Global tests ensure the model as a whole is significant, while partial tests help evaluate the importance of specific sets of variables.
+
+**Statistical Tests of Residuals:**
+
+Use: Diagnostic tests such as residuals analysis, normality tests, and heteroscedasticity tests assess the adequacy of the model assumptions.
+
+Justification: Ensures that the residuals meet the assumptions of the regression model, validating the reliability of the estimated coefficients.
+
+For all statistical tests below, an alpha value of 0.05 will be used. For the report, the work was split as such:
+
+Aditya Jain – Work on producing the models
+
+Ahmed Omar – Work on assumptions 
+
+Yedu Krishnan – Write up and data visualization
+
+Overall, all three of us worked together on the project and assisted eachother with each each of our sections. Model creation, assumptions, and visualizations were all written together through a zoom call to make sure our data and assumptions are all clear. GitHub and teams were both used for the presentation and the report.
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Load the cleaned fuelcar dataset
+data = read.csv("fuelcarcleaned.csv")
+
+# Show the first 10 rows
+head(data)
+```
+
+### Full Model 
+
+In the first step, our objective is to create a fullmodel to test the significance of the independent variables, or predictors, on our dependent variable (mpg). This means that we will test the following hypothesis:
+
+$$ 
+\begin{eqnarray}​
+\text{H}_{0} &:& \ \text{β1 = β2 =...= βp = 0} \\​
+\text{H}_{A} &:& \ \text{at least one βi is NOT EQUAL TO 0 (i = 1,2,...,p)}​
+\end{eqnarray}​
+$$
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Create a fullmodel to see what variables are significant
+fullmodel = lm(mpg ~ factor(cylinders) + displacement + horsepower + weight + acceleration +  factor(origin), data = data)
+summary(fullmodel)
+```
+
+The output result is a p-value of 2.2e-16 for the full model, which is less than an alpha value of 0.05 enabling us to reject the null hypothesis. We can infer the alternative hypothesis that states at least one βi is not zero, and that atleast one of the predictor variables is statistically significant.
+
+From the fullmodel summary, "displacement" and "acceleration" have a p-value of 0.509715 and 0.420701 respectively, which means we FAIL to reject the null hypothesis that states βi = 0. This means that these variables may not have an effect on the dependent variable "mpg" or that they are not statistically significant to the model. We can remove "displacement" and "acceleration" from our model in a reducedmodel.
+
+It is important to note that "cylinders" and "origin" are both qualitative variables, and therefore the factor function has been utilized to account for the differences.
+
+## Regression Procedure to Verify fullmodel Results
+
+#### Stepwise Regression Procedure
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(olsrr)
+# Stepwise Regression Procedure
+stepmod=ols_step_both_p(fullmodel,pent = 0.05, prem = 0.1, details=FALSE)
+summary(stepmod$model)
+```
+
+#### Backward Elimination Procedure 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+backmodel=ols_step_backward_p(fullmodel, prem = 0.1, details=FALSE) 
+summary(backmodel$model)
+
+```
+
+#### Forward Selection Procedure 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+formodel=ols_step_forward_p(fullmodel,penter = 0.1, details=FALSE) 
+summary(formodel$model)
+```
+
+All three Regression Procedures (Stepwise Regression, Backward Elimination, and Forward Selection) have the same predictors that are significant compared to the manual fullmodel. Therefore, only "weight," "cylinders," "horsepower," and "origin" will will be used for the possible reducedmodel, but the multicollinearity assumption must be checked beforehand.
+
+## All-possible-Regressions-Selection 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Use the ols_step_best_subset function
+predictorselection=ols_step_best_subset(fullmodel, details=TRUE)
+
+# Extract the values required
+rsquare = c(predictorselection$rsquare)
+AdjustedR = c(predictorselection$adjr)
+cp = c(predictorselection$cp)
+AIC = c(predictorselection$aic)
+cbind(rsquare,AdjustedR,cp,AIC)
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+par(mfrow=c(2,2)) # split the plotting panel into a 2 x 2 grid
+
+plot(predictorselection$cp,type = "o",pch=10, xlab="Number of Variables",ylab= "Cp") 
+
+plot(predictorselection$rsq,type = "o",pch=10, xlab="Number of Variables",ylab= "Rˆ2") 
+
+plot(predictorselection$aic,type = "o",pch=10, xlab="Number of Variables",ylab= "AIC") 
+
+plot(predictorselection$adjr,type = "o",pch=10, xlab="Number of Variables",ylab= "Adjusted Rˆ2") 
+```
+  <p style="text-align:center;">Figure 1</p>
+
+**Cp (Mallows' Cp):** A small Cp value (small total mean square error - MSE) means that the model is relatively precise. Lower Cp values indicate better models. 
+
+**AIC (Akaike Information Criterion):** AIC is another measure of model fit that balances goodness of fit and model complexity. Lower AIC values indicate better models.
+
+Based on the predictor selection, we wish to get a balance of the r-square, cp, and AIC. In this case, a model with 4 variables appears to have the lowest cp and AIC values, and the adjusted r-square is relatively high.
+
+### Multicollinearity
+
+Before keeping all these variables, multicollinearity will be tested before reducing the model using the following hypothesis:
+
+$$
+\begin{eqnarray}
+\text{H}_{0} &:& \ \text{There is NO multicollinearity that exists between the independent variables} \\
+\text{H}_{A} &:& \ \text{There is multicollinearity that exists between the independent variables}
+\end{eqnarray}
+$$
+  
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Check pairs of the predictor variables (visualization)
+pairs(~ factor(cylinders) + displacement + horsepower + weight + acceleration + factor(origin), data = data)
+```
+  <p style="text-align:center;">Figure 2</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(mctest)
+# Check for multicollinearity using VIF
+imcdiag(fullmodel, method="VIF")
+```
+
+VIF values of 1 indicate NO collinearity 
+
+VIF values of 1 - 5 indicate MODERATE collinearity 
+
+VIF values of > 5 indicate CRITICAL values of collinearity (p-value becomes questionable)
+
+Based on the VIF test, most of the variables indicate collinearity due to the high VIF values. The independent variables, "cylinders," "displacement," "horsepower," and "weight," all have VIF values that are greater than 10, and therefore this indicates critical values of collinearity. Since "cylinders" has the highest VIF value, we will remove it from the model to see if anything changes.
+
+### Multicollinearity (No Cylinders Variable)
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Fullmodel2 without cylinders to check multicollinearity
+fullmodel2 = lm(mpg ~  displacement + horsepower + weight + acceleration +  factor(origin), data = data)
+summary(fullmodel2)
+
+# Check pairs of the predictor variables (visualization)
+pairs(~ horsepower + weight + acceleration + factor(origin), data = data)
+```
+  <p style="text-align:center;">Figure 3</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Check for multicollinearity using VIF
+imcdiag(fullmodel2, method="VIF")
+```
+  
+Based on the VIF test without "cylinders", most of the variables now indicate no multicollinearity, except "displacement" and "weight." Since "weight" does not have a really high VIF compared to the originally removed "cylinders," we plan to keep it in our model. Furthermore, "horsepower" now has a reduced VIF and the detection is below 1, which may indicate that "horsepower" and "cylinders" had a strong collinear relation. "displacement" will be removed and two reduced model will be created below, one with "cylinders" and one without to better see, through an ANOVA test, on whether to remove cylinders or not.
+
+### Reduced Model (no cylinders)
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Create a reducedmodel with the removed variables
+reducedmodel_no_cylinder =lm(mpg ~ horsepower + weight +  factor(origin) , data = data)
+summary(reducedmodel_no_cylinder)
+```
+### Reduced Model (with cylinders)
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Create a reducedmodel with the removed variables
+reducedmodel =lm(mpg ~ factor(cylinders) + horsepower + weight +  factor(origin) , data = data)
+summary(reducedmodel)
+```
+
+The reducedmodel with cylinders has a slight increase in the adjusted R-squared and a reduction in the Residual standard error. By using a Partial F test, we can confirm that the independent variable (removed from fullmodel) should be out of the model at significance level of 0.05.
+
+### ANOVA Partial F-test
+
+By using a Partial F test, we can confirm that the independent variables (removed from) should be out of the model at significance level of 0.05. We will test the following hypothesis:
+
+$$ 
+\begin{eqnarray}
+\text{H}_{0} &:& \ \text{"displacement," "acceleration," and "cylinders" = 0 in the model Y = B0 + B1X1 + B2X2 + B3X3} \\
+\text{H}_{A} &:& \ \text{"displacement," "acceleration," and "cylinders" NOT EQUAL TO 0 in the model Y = B0 + B1X1 + B2X2 + B3X3}
+\end{eqnarray}
+$$
+**ANOVA for fullmodel and reducedmodel (No cylinder present)**
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Run an ANOVA test between fullmodel and reducedmodel_no_cylinders
+anova(fullmodel, reducedmodel_no_cylinder)
+```
+The p-value for the ANOVA test between the full model and reduced model(no cylinder) is 1.223e-09, which is less than the alpha value of 0.05. Therefore, we REJECT the null hypothesis and infer the alternative. This suggests that one of those variables has a statistical significance on the model, and that their coefficient is NOT equal to 0.
+
+$$ 
+\begin{eqnarray}
+\text{H}_{0} &:& \ \text{"displacement" and "acceleration" = 0 in the model Y = B0 + B1X1 + B2X2 + B3X3} \\
+\text{H}_{A} &:& \ \text{"displacement" and "acceleration" NOT EQUAL TO 0 in the model Y = B0 + B1X1 + B2X2 + B3X3}
+\end{eqnarray}
+$$
+
+**ANOVA for fullmodel and reducedmodel (cylinder present)**
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+anova(fullmodel, reducedmodel)
+```
+
+The p-value for the ANOVA test between the full model and reduced model is 0.5476, which is greater than the alpha value of 0.05. Therefore, we FAIL to reject the null hypothesis. This suggests that there is no statistical significance to conclude that at least one of the coefficients for 'displacement' or 'acceleration' is not equal to 0 (as stated in the alternative hypothesis). In other words, we do not have enough statistical evidence to suggest that these predictors have an effect on the model.
+
+## Variable Selection
+
+Based on the All-possible-Regressions-Selection values and the significance of cylinders on mpg found by the fullmodel,Stepwise Regression, Backward Elimination, and Forward Selection models, we decided to keep the cylinder variable in our reduced model. Even though the multicollinearity assumption has been broken, cylinders is important for fuel efficiency as shown in the boxplot below (Figure 1). Furthermore, according to the All-possible-Regressions-Selection, the best model would be one with four variables like in our reducedmodel.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+ggplot(data, aes(x = factor(cylinders), y = mpg)) +
+  geom_boxplot() +
+  labs(title = "Figure 1 - Boxplot of Mileage for Different Cylinder Size", x = "Cylinders", y = "Mileage(mpg)")
+
+```
+  <p style="text-align:center;">Figure 4</p>
+
+
+## Interaction Model
+
+To see if any interactions exist between the predictor variables, we can create an interacmodel and test the following hypothesis:
+
+$$ 
+\begin{eqnarray}
+\text{H}_{0} &:& \ \text{There is NO interaction effect between the independent variables in the model} \\
+\text{H}_{A} &:& \ \text{There is an interaction effect between the independent variables in the model}
+\end{eqnarray}
+$$
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Create interacmodel to test for interaction terms
+interacmodel =lm(mpg ~ (factor(cylinders) + horsepower + weight +  factor(origin))^2 , data = data)
+summary(interacmodel)
+```
+There appears to be one interaction term between "horsepower" and "origin." This is because the p-values for both horsepower:factor(origin)2 and horsepower:factor(origin)3 are 0.0305 and 0.0274 respectively. These values are less than an alpha value of 0.05, which means we can REJECT the null hypothesis and infer the alternative that states that there is an interaction effect between the independent variables in the model.
+
+### Interaction model with the interaction term
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+interacmodel1 = lm(mpg ~ factor(cylinders) + horsepower + weight +  factor(origin) + horsepower:origin, data = data)
+summary(interacmodel1)
+```
+
+The interacmodel model will be tested for higher-order models below.
+
+### Higher Order Model
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(GGally)
+# Check using ggpairs
+highordertest = data.frame(data$mpg,data$cylinders, data$horsepower, data$weight, data$origin)
+head(highordertest,5)
+
+ggpairs(highordertest,lower = list(continuous = "smooth_loess", combo = "facethist", discrete = "facetbar", na = "na"), progress = FALSE)
+```
+  <p style="text-align:center;">Figure 5</p>
+
+By looking at the higher order model, there appears to be significance for both horsepower and weight. Below, we will check the square model to see the impacts on our model.
+
+### Square Model
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Check the higher square model to see if any variables are significant
+squaremodel = lm(mpg ~ factor(cylinders) + horsepower + I(horsepower^2) + weight + I(weight^2) +  factor(origin) + horsepower:origin, data = data)
+summary(squaremodel)
+```
+
+From the square model, the p-value for the horsepower variable squared is 0.000886 whereas the weight variable is 0.336113. Therefore, horsepower^2 will be added to the model since it's significant, whereas the weight^2 is not.
+
+### Cube Model
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+cubemodel = lm(mpg ~ factor(cylinders) + horsepower + I(horsepower^2) + I(horsepower^3) + weight +  factor(origin) + horsepower:origin, data = data)
+summary(cubemodel)
+```
+
+By keeping the squared horsepower value and cubing it, the p-value is 0.178595. This means that horsepower^3 is not significant for the model, and therefore will be removed. Instead, through higher order model checks, only horsepower^2 will be kept in the proposed model.
+
+### Proposed Model
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Proposed model with the interaction term
+proposedmodel = lm(mpg ~ factor(cylinders) + horsepower + I(horsepower^2) + weight +  factor(origin) + horsepower:origin, data = data)
+summary(proposedmodel)
+```
+Compare the adjusted R-squared and Residual standard error for reducedmodel and proposedmodel.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Compare adjusted R-squared and Residual standard error for reducedmodel and proposedmodel
+
+# Print Adjusted R-squared values
+cat("Adjusted R-squared for Reduced Model:", summary(reducedmodel)$adj.r.squared, "\n")
+cat("Adjusted R-squared for Proposed Model:", summary(proposedmodel)$adj.r.squared, "\n")
+
+# Print Residual Standard Errors
+cat("Residual Standard Error for Reduced Model:", sigma(reducedmodel), "\n")
+cat("Residual Standard Error for Proposed Model:", sigma(proposedmodel), "\n")
+
+```
+
+**The adjusted R-squared increased from the reducedmodel(0.7496062) to the proposedmodel(0.7673217).**
+
+**The standard error decreased from the reducedmodel(3.905576) to the proposedmodel (3.764881).**
+
+**The final proposedmodel is:**
+
+
+
+$$ 
+Y_{\text{mpg}} = 42.9164+7.0076X_{\text{Cy4}}+9.2606X_{\text{Cy5}} + 4.1529X_{\text{Cy6}} + 5.9548X_{\text{Cy8}}\\
+- 0.2143X_{\text{Hp}} +  0.0006X_{\text{Hp}}^2  - 0.0033X_{\text{Wt}} + 0.6808X_{\text{Org2}} +  4.1272X_{\text{Org3}}
+- 0.0106022X_{\text{Hp:Org}}
+$$
+
+## Assumption Checks
+
+### Linearity
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+# Linearity assumptions (visualization)
+ggplot(proposedmodel, aes(x=.fitted, y=.resid)) +
+  geom_point() + geom_smooth()+
+  geom_hline(yintercept = 0)+
+  labs(title = "Figure 2 - Linearity Assumption on Proposed Linear Regression Model") 
+
+```
+  <p style="text-align:center;">Figure 6</p>
+
+There does appear to be a problem with the linearity assumption. Most of the data points are scattered around the zero-residual line, but there is a slight curve around the right end of the zero line. This indicates that the linear model may not be the best fit for the data and the assumptions of linearity and constant variance of the residuals are not met. These will be checked below.
+
+### Homoscedasticity
+
+To statistically test for heteroscedasticity, the following hypothesis will be used using the Breusch-Pagan test:
+
+$$ 
+\begin{eqnarray}
+\text{H}_{0} &:& \ \text{Heteroscedasticity is NOT present (homoscedasticity)} \\
+\text{H}_{A} &:& \ \text{Heteroscedasticity is present}
+\end{eqnarray}
+$$
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(lmtest)
+# Scale-Location plot
+plot(proposedmodel, which = 3)
+```
+  <p style="text-align:center;">Figure 7</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Statistical Breusch-Pagan test
+bptest(proposedmodel)
+
+```
+
+The scale-location plot does not appear to be straight line meaning that just visually, we won't assume that the data meets the assumption of homoscedasticity.
+
+The p-value for the Breusch-Pagan test is 7.487e-05, which is less than an alpha value of 0.05. Therefore, we REJECT the null hypothesis that heteroscedasticity is NOT present, and infer the alternative that suggests that heteroscedasticity is present in the proposedmodel.
+
+### Normality 
+
+To statistically test for normality, the following hypothesis will be used using Shapiro Wilk test:
+
+$$ 
+\begin{eqnarray}
+\text{H}_{0} &:& \ \text{The sample data are normally distributed} \\
+\text{H}_{A} &:& \ \text{The sample data are NOT normally distributed}
+\end{eqnarray}
+$$
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Histogram Visualization of the data
+ggplot(data=data, aes(residuals(proposedmodel))) +
+  geom_histogram(breaks = seq(-1,1,by=0.1), col="black", fill="blue") +
+  labs(title="Figure 3 - Histogram for Residuals") +
+  labs(x="Residuals", y="Count")
+```
+  <p style="text-align:center;">Figure 8</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Normal QQ plot
+ggplot(data = data, aes(sample=proposedmodel$residuals)) +
+  stat_qq() +
+  stat_qq_line()+
+   labs(title = "Figure 4 - Normal QQ-Plot")
+```
+    <p style="text-align:center;">Figure 9</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Shapiro Wilk test
+shapiro.test(residuals(proposedmodel))
+
+```
+
+
+Based on the histogram and normal QQ plot, the sample data appears to NOT be normally distributed due to the shape of the histogram as well as most data points are at the polar ends on the QQ plot (far from the center line on the right hand side). Furthermore, by running a Shapiro Wilk test, the p-value obtained is 3.3e-08 which is less than an alpha value of 0.05. This means that we can reject the null hypothesis and instead infer the alternative that states that the data points are NOT normally distributed.
+
+### Outliers 
+
+Below, we will check for outliers in the data by plotting leverage vs fitted graphs as well as Cook's distance to get a rough estimate of any influencing outliers.
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Check leverage points
+lev=hatvalues(proposedmodel)
+p = length(coef(proposedmodel))
+n = nrow(data)
+outlier3p = lev[lev>(3*p/n)]
+outlier3p
+
+# Plot the outliers 
+plot(rownames(data), lev, main = "Leverage in Fuel Efficiency Data", xlab = "Observation", ylab = "Leverage Value")
+abline(h = 3 * p / n, lty = 1)
+```
+  <p style="text-align:center;">Figure 10</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Plot a Residuals vs Leverage Plot
+plot(proposedmodel, which = 5)
+```
+   <p style="text-align:center;">Figure 11</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Plot Cook's distance
+plot(proposedmodel,pch=18,col="red",which=c(4))
+```
+  <p style="text-align:center;">Figure 12</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Create new dataset without outliers
+data_no_outliers = data[-as.numeric(names(outlier3p)), ]
+head(data_no_outliers,5)
+newdata = data.frame(data_no_outliers)
+
+```
+
+
+There does appear to be outliers for this dataset, but a general rule for Cook's distance is values greater than 0.5 to have an influence, but since all the data points are not greater than 0.5 in the Residuals vs Leverage plot,we can assume that they don't have significant influence. This is also true for the Cook's Distance plot. There are no influential outliers greater than 0.5 and therefore, we will keep all the outliers.
+
+### Assumption Results
+
+Based on the results above, the proposedmodel appears to have failed most assumptions. In this case, our goal is to transform the dataset using a Box-Cox transformation to see if the assumptions can be met through transformation. If so, that will be the final model that will be used for predicting the fuel mileage of a vehicle based on the independent variables.
+
+### Proposed Model Transformation: Box-Cox Transformation
+
+In order to transform the data using a Box-Cox transformation, we first have to find the best lambda to transform the data using that value. The best lambda in this case is -0.2323232.
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Box-Cox Transformation
+library(MASS)
+bc=boxcox(proposedmodel,lambda=seq(-1,1))
+```
+  <p style="text-align:center;">Figure 13</p>
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+bestlambda=bc$x[which(bc$y==max(bc$y))]
+
+# Print a message indicating what bestlambda represents
+cat("The best lambda is the x-value corresponding to the maximum y-value in the 'bc' data:", bestlambda, "\n")
+```
+ 
+**Create the Box-Cox Model using the best lambda**
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(MASS)
+# Create Box-Cox Model
+bcmodel = lm((((mpg ^ bestlambda)-1)/bestlambda) ~ factor(cylinders) + horsepower + weight +  factor(origin) + horsepower:origin, data = data)
+summary(bcmodel)
+```
+## How does the Box-Cox Model Compare to the Proposed Model?
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Compare adjusted R-squared and Residual standard error for reducedmodel and proposedmodel
+
+# Print Adjusted R-squared values
+cat("Adjusted R-squared for Proposed Model:", summary(proposedmodel)$adj.r.squared, "\n")
+cat("Adjusted R-squared for BC Model:", summary(bcmodel)$adj.r.squared, "\n")
+
+# Print Residual Standard Errors
+cat("Residual Standard Error for Proposed Model:", sigma(proposedmodel), "\n")
+cat("Residual Standard Error for BC Model:", sigma(bcmodel), "\n")
+```
+**The adjusted R-squared increased from the proposedmodel(0.7673217) to the bcmodel(0.8202474).**
+
+**The standard error decreased from the proposedmodel(3.764881) to the bcmodel (0.07077338).**
+
+**Below, we will check whether the assumptions of the model have been impacted.**
+
+## Did the Box-Cox Transformation Change the Assumptions?
+
+### Linearity 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Linearity assumptions (visualization)
+ggplot(bcmodel, aes(x=.fitted, y=.resid)) +
+  geom_point() + geom_smooth()+
+  geom_hline(yintercept = 0)+
+  labs(title = "Figure 5 - Linearity Assumption on the Box-Cox Model") 
+
+```
+  <p style="text-align:center;">Figure 14</p>
+
+The linearity assumption using the residuals vs. fitted values for the box-cox model appears to be more flattened out in Figure 5, compared to Figure 2 in the proposed model. This indicates that the linearity assumption has improved after the transformation.
+
+
+### Heteroscedasticity
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Scale-Location plot for bcmodel
+plot(bcmodel, which = 3)
+```
+ <p style="text-align:center;">Figure 15</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Statistical Breusch-Pagan test
+bptest(bcmodel)
+```
+
+
+For the box-cox model, the p-value for the Breusch-Pagan test is 0.2168, which is greater than an alpha value of 0.05. Therefore, we fail to reject the null hypothesis that heteroscedasticity is NOT present and infer that there is statistical evidence for homoscedasticity. By looking at the Scale-Location plot, we can also see a more straight line. In this case, the transformed model has fixed the heteroscedasticity assumption.
+
+### Normality
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Histogram Visualization of the data
+ggplot(data=data, aes(residuals(bcmodel))) +
+  geom_histogram(breaks = seq(-1,1,by=0.1), col="black", fill="blue") +
+  labs(title="Figure 6 - Histogram for Residuals") +
+  labs(x="Residuals", y="Count")
+```
+  <p style="text-align:center;">Figure 16</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Normal QQ plot
+ggplot(data = data, aes(sample=bcmodel$residuals)) +
+  stat_qq() +
+  stat_qq_line()+
+  labs(title = "Figure 7 - Normal QQ-Plot For Box-Cox Transformed Model")
+```
+    <p style="text-align:center;">Figure 17</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Shapiro Wilk test
+shapiro.test(residuals(bcmodel))
+```
+ 
+
+Based on the Figure 6 (Histogram)  and Figure 7 (Normal QQ plot), the sample data appears to be normally distributed due to the shape of the histogram as well as most data points are now more so on the straight line. Furthermore, by running a Shapiro Wilk test, the p-value obtained is 0.0578 which is greater than an alpha value of 0.05. This means that we fail to reject the null hypothesis and instead have statistical evidence to suggest that the data points are normally distributed. Again, the transformed model fixed one of our assumptions.
+
+### Outliers
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Plot a Residuals vs Leverage Plot
+plot(bcmodel, which = 5)
+```
+  <p style="text-align:center;">Figure 18</p>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Plot Cook's distance
+plot(bcmodel,pch=18,col="red",which=c(4))
+```
+    <p style="text-align:center;">Figure 19</p>
+    
+Here, we are taking the extreme points from the Cook's Distance graph for prediction to see how good our prediction and model are.
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+Ex_point1 = data_no_outliers[9,]
+print(Ex_point1)
+Ex_point2 = data_no_outliers[10,]
+print(Ex_point2)
+Ex_point3 = data_no_outliers[11,]
+print(Ex_point3)
+```
+
+
+
+The outliers and Cook's distance after the transformation are still somewhat similar. This is due to us not removing any outliers since Cook's distance was not greater than 0.5.
+
+### Model Predictions: Proposed Model Vs. Box-Cox Transformation Model
+
+Below, we will use both the proposed model and the box-cox model to predict fuel mileage based on datapoints provided by the data, and to see the significance of each model's prediction. We are using there data frames new_data1, new_data2 and new_data3 which are the extreme points that we found on the Cook's Distance graph.
+
+#### Proposed Model 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# New data points for prediction
+new_data1 = data.frame(
+  cylinders = 8,
+  horsepower = 190,
+  weight = 3850,
+  origin = 1
+)
+new_data2 = data.frame(
+  cylinders = 8,
+  horsepower = 170,
+  weight = 3563,
+  origin = 1
+)
+new_data3 = data.frame(
+  cylinders = 8,
+  horsepower = 160,
+  weight = 3609,
+  origin = 1
+)
+
+# Predictions using the proposedmodel
+prediction1 = predict(proposedmodel, newdata = new_data1, interval = "predict")
+
+prediction2 = predict(proposedmodel, newdata = new_data2, interval = "predict")
+
+prediction3 = predict(proposedmodel, newdata = new_data3, interval = "predict")
+
+cat("Prediction for point 9:", prediction1, "\n")
+cat("Prediction for point 10:", prediction2, "\n")
+cat("Prediction for point 11:", prediction3, "\n")
+```
+
+#### Box-Cox Transformation Model
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Predictions using the Box-Cox model
+prediction1 = predict(bcmodel, newdata = new_data1, interval = "predict")
+prediction2 = predict(bcmodel, newdata = new_data2, interval = "predict")
+prediction3 = predict(bcmodel, newdata = new_data3, interval = "predict")
+
+# Apply Inverse Box-Cox Transformation
+if (bestlambda != 0) {
+  inverse_prediction1 = (1 + bestlambda * prediction1)^(1/bestlambda)
+} else {
+  inverse_prediction1 = exp(prediction)
+}
+
+if (bestlambda != 0) {
+  inverse_prediction2 = (1 + bestlambda * prediction2)^(1/bestlambda)
+} else {
+  inverse_prediction2 = exp(prediction)
+}
+
+if (bestlambda != 0) {
+  inverse_prediction3 = (1 + bestlambda * prediction3)^(1/bestlambda)
+} else {
+  inverse_prediction3 = exp(prediction)
+}
+
+# Display the prediction
+cat("Prediction for point 9:", inverse_prediction1, "\n")
+cat("Prediction for point 10:", inverse_prediction2, "\n")
+cat("Prediction for point 11:", inverse_prediction3, "\n")
+```
+
+
+Based on the prediction results, the box-cox model appears better at predicting fuel mileage due to the model being a better fit and therefore, it will be used as our final significant model. Furthermore, the lower and upper intervals are more precise, and therefore provide a better estimate of the actual mpg prediction.
+
+### Result
+
+In our first step, we tested all variables in a full model.    
+
+The hypothesis for this test to determine significance was:       
+$$ 
+\begin{eqnarray}​
+\text{H}_{0} &:& \ \text{β1 = β2 =...= βp = 0} \\​
+\text{H}_{A} &:& \ \text{at least one βi is NOT EQUAL TO 0 (i = 1,2,...,p)}​
+\end{eqnarray}​
+$$
+After testing the global t-test, we got a p-value of less than alpha. The full model is shown below.
+
+$$
+Y_{\text{mpg}} = 35.66 + 8.54 \, X_{\text{factor(cylinders)4}} + 10.86 \, X_{\text{factor(cylinders)5}} + \\
+4.56 \, X_{\text{factor(cylinders)6}} + 6.60 \, X_{\text{factor(cylinders)8}} + 0.01 \, X_{\text{displacement}} - \\
+0.08 \, X_{\text{horsepower}} - 0.00 \, X_{\text{weight}} - 0.09 \, X_{\text{acceleration}} + \\
+0.09 \, X_{\text{factor(origin)2}} + 2.65 \, X_{\text{factor(origin)3}}
+$$
+
+Afterwards, we did the regression procedure to verify the full model results. Every regression procedure provided us with similar results compared to our full model. Then we did the all possible regression selection. Based on the former, we confirmed a model with four variables would be the most ideal due to the having the lowest cp and AIC values and a relatively high adjusted r-square.
+
+For the next step, we did the Multicolinearity test. Based on the VIF test, most of the variables indicate colinearity due to the high VIF values. We removed the Cylinder predictor which was giving the most colinear effect. We then created two reduced model, one with cylinder and without cylinder. The model is shown below.
+
+$$ 
+Y_{\text{mpg}} = 42.74 - 0.05 \, X_{\text{horsepower}} - 0.00 \, X_{\text{weight}} + 0.96 \, X_{\text{factor(origin)2}} + 2.74 \, X_{\text{factor(origin)3}} 
+$$
+$$
+Y_{\text{mpg}} = 34.01 + 8.64 \, X_{\text{factor(cylinders)4}} + 11.06 \, X_{\text{factor(cylinders)5}} + 5.05 \, X_{\text{factor(cylinders)6}} + 7.52 \, X_{\text{factor(cylinders)8}} - \\
+0.07 \, X_{\text{horsepower}} - 0.00 \, X_{\text{weight}} - 0.09 \, X_{\text{factor(origin)2}} + 2.48 \, X_{\text{factor(origin)3}}
+$$
+
+Next we conducted two ANOVA tests to confirm whether the reduced model(with cylinder and without cylinder) are better or not. The Hypothesis for both hypothesis test are down below.
+
+$$ 
+\begin{eqnarray}​
+\text{H}_{0} &:& \ \text{"displacement," "acceleration," and "cylinders" = 0 in the model Y = B0 + B1X1 + B2X2 + B3X3} \\​
+\text{H}_{A} &:& \ \text{"displacement," "acceleration," and "cylinders" NOT EQUAL TO 0 in the model Y = B0 + B1X1 + B2X2 + B3X3}​
+\end{eqnarray}​
+$$
+$$ 
+\begin{eqnarray}​
+\text{H}_{0} &:& \ \text{"displacement" and "acceleration" = 0 in the model Y = B0 + B1X1 + B2X2 + B3X3} \\​
+\text{H}_{A} &:& \ \text{"displacement" and "acceleration" NOT EQUAL TO 0 in the model Y = B0 + B1X1 + B2X2 + B3X3}​
+\end{eqnarray}​
+$$
+For the first ANOVA, the p-value was less than alpha but for the second test, it was greater. From this, we came to an inference that the cylinder indeed is a significant predictor and the reduced model with cylinder is better than the model without this variable. Therefore, we kept the cylinders variable even though it had an issue with multicolinearity.
+
+We then created an interaction model. The hypothesis are down below.
+$$ 
+\begin{eqnarray}​
+\text{H}_{0} &:& \ \text{There is NO interaction effect between the independent variables in the model} \\​
+\text{H}_{A} &:& \ \text{There is an interaction effect between the independent variables in the model}​
+\end{eqnarray}​
+$$
+After the test, we came to a conclusion and selected the below model.
+
+$$
+Y_{\text{mpg}} = 33.29 + 6.99 \, X_{\text{factor(cylinders)4}} + 9.34 \, X_{\text{factor(cylinders)5}} + 3.45 \, X_{\text{factor(cylinders)6}} + 4.30 \, X_{\text{factor(cylinders)8}} + \\
+0.01 \, X_{\text{horsepower}} - 0.00 \, X_{\text{weight}} + 4.34 \, X_{\text{factor(origin)2}} + 10.92 \, X_{\text{factor(origin)3}} - 0.05 \, X_{\text{horsepower:origin}}
+$$
+We also did a test for finding the higher order model, compared all the relevant things from summary such as RMSE, R2Adj etc and we came up with the proposed model. The model is shown below.
+
+$$
+Y_{\text{mpg}} = 42.92 + 7.01 \, X_{\text{factor(cylinders)4}} + 9.26 \, X_{\text{factor(cylinders)5}} + 4.15 \, X_{\text{factor(cylinders)6}} + 5.95 \, X_{\text{factor(cylinders)8}} - 0.21 \, X_{\text{horsepower}} + \\
+0.00 \, X_{\text{I(horsepower)}}^2 - 0.00 \, X_{\text{weight}} + 0.68 \, X_{\text{factor(origin)2}} + 4.13 \, X_{\text{factor(origin)3}} - 0.01 \, X_{\text{horsepower:origin}}
+$$
+Afterwards, we did the linear assumptions such as Linearity, Homoscedasticity, Normality and Outliers. The hypothesis for the former are down below.
+
+$$ 
+\begin{eqnarray}​
+\text{H}_{0} &:& \ \text{Heteroscedasticity is NOT present (homoscedasticity)} \\​
+\text{H}_{A} &:& \ \text{Heteroscedasticity is present}​
+\end{eqnarray}​
+$$
+$$ 
+\begin{eqnarray}​
+\text{H}_{0} &:& \ \text{The sample data are normally distributed} \\​
+\text{H}_{A} &:& \ \text{The sample data are NOT normally distributed}​
+\end{eqnarray}​
+$$
+Our model failed most of the assumptions except linearity and any influential outliers. So, in order to fix Normality and Homoscedasticity. a Box-Cox transformation was used to see if the assumption could be met. From that, we got our best lambda as -0.2323232 and used that to propose a transformed model, which is:
+
+$$
+Y_{\text{mpg}} = 2.48 + 0.14 \, X_{\text{factor(cylinders)4}} + 0.19 \, X_{\text{factor(cylinders)5}} + 0.08 \, X_{\text{factor(cylinders)6}} + 0.08 \, X_{\text{factor(cylinders)8}} - 0.00 \, X_{\text{horsepower}} + \\
+0.00 \, X_{\text{I(horsepower^2)}} - 0.00 \, X_{\text{weight}} + 0.01 \, X_{\text{factor(origin)2}} + 0.07 \, X_{\text{factor(origin)3}} - 0.00 \, X_{\text{horsepower:origin}}
+$$
+This fixed our Normality issue and the homoscedasticity. RMSE decreased and R2Adj increased. Then we took 3 extreme  points from the Cook's distance graph and predicted with proposed model and transformed model. The transformed model was better at predicting and also had a narrower confidence interval.
+
+Ultimately, we selected the transformed model as our final model. The model is shown below.
+
+$$
+Y_{\text{mpg}} = 2.48 + 0.14 \, X_{\text{factor(cylinders)4}} + 0.19 \, X_{\text{factor(cylinders)5}} + 0.08 \, X_{\text{factor(cylinders)6}} + 0.08 \, X_{\text{factor(cylinders)8}} - 0.00 \, X_{\text{horsepower}} + \\
+0.00 \, X_{\text{I(horsepower^2)}} - 0.00 \, X_{\text{weight}} + 0.01 \, X_{\text{factor(origin)2}} + 0.07 \, X_{\text{factor(origin)3}} - 0.00 \, X_{\text{horsepower:origin}}
+$$
+
+### Discussion
+
+In plain terms, we used statistical modeling to figure out what makes cars get better gas mileage. We tested different combinations of engine features to find the best fitting model. The one that worked best included number of cylinders, horsepower, weight, where the car was made, and an interaction between horsepower and origin.
+
+We did have to transform the gas mileage data to follow normal statistics rules about bell curve distributions and equal scattering. After fixing that through a Box-Cox transformation, our final model did a good job predicting gas mileage, especially for cars that were outside the norm. It was better than our first tries.
+
+Overall, we met our goal of finding the engine things that matter most for efficiency. Step-by-step testing let us shrink down from a big model to a tighter one. We also solved issues about data shape when the numbers didn't follow the usual rules.
+
+To make the model even better, we could add in extra pieces like transmission and rear-wheel/4-wheel drive next time. Checking more interactions might also help. And transforming earlier when the data shape is off could streamline things.
+
+In short, we used stats to pinpoint cylinder number, horsepower, weight, origin, and horsepower-origin interactions as big impacts on MPG. Transforming MPG gave us a model that follows standard data guidelines. These results break down what makes cars sip or gulp fuel based on what we had to work with. That information could guide car companies in designing vehicles that use less gas. We explained the findings in regular language so anyone can understand them.
+
+### Conclusion
+
+In conclusion, the objective of this report was to create a multiple linear regression model to predict the fuel efficiency (dependent variable = mpg) of a vehicle given multiple independent variables such as cylinders, displacement, horsepower, weight, acceleration, and it's origin. Once a reduced model was proposed, the model failed multiple assumptions such as multicollinearity, heteroscedasticity, and normality. By creating a transformed model using the Box-Cox transformation, most of the assumptions like heteroscedasticity and normality were met. This model was then used to predict the miles per gallon (mpg) and was more accurate than the proposed model due to a higher adjusted r-square, lower standard error, and a more fitted confidence interval when it came to prediction.
+
+### References
+
+[1]‘StatLib---Datasets Archive’. Available: http://lib.stat.cmu.edu/datasets/. [Accessed: Nov. 29, 2023]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
